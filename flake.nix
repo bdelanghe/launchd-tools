@@ -41,9 +41,10 @@
             assert got.supervisor.config.StandardOutPath == "/Users/t/Library/Logs/supervisor.log";
             assert empty == { }; # defaults add no agent
             pkgs.runCommand "launchd-tools-module-logic" { } "touch $out";
-        }
-        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-          # Under real Home Manager (launchd is darwin-only there): named agents get the named launcher, the supervisor is emitted.
+
+          # Under real Home Manager, on every system: HM declares launchd.agents everywhere (only the plists and
+          # activation are darwin-only), so this runs in Linux CI too, not just on a macOS runner.
+          # Named agents get the named launcher, the supervisor is emitted.
           module-eval =
             let
               hm = home-manager.lib.homeManagerConfiguration {

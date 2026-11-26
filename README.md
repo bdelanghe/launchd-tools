@@ -18,4 +18,4 @@ launchdTools.supervisor = { enable = true; program = "${my-supervisor}/bin/my-su
 
 ## Checks
 
-`nix flake check`: the module's logic against a stub (any system), and on macOS the module under Home Manager.
+`nix flake check`: the module's logic against a stub, and the module under Home Manager (both on any system).
