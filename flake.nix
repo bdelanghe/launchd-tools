@@ -20,7 +20,9 @@
         launchdTools.supervisor = { enable = true; program = "/bin/prog"; }; };
     in
     {
-      homeManagerModules.default = import ./nix/module.nix;
+      # A path, not `import`: the module system keys path modules by file, so importing this twice (sharedModules
+      # plus a user's own imports) dedups instead of failing "already declared", and errors name the file.
+      homeManagerModules.default = ./nix/module.nix;
 
       checks = forAll (pkgs:
         let
@@ -30,6 +32,8 @@
             options.home = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
           };
           got = (lib.evalModules { modules = [ stub ./nix/module.nix fixture ]; }).config.launchd.agents;
+          # The exported module imported twice evaluates once.
+          twice = (lib.evalModules { modules = [ stub self.homeManagerModules.default self.homeManagerModules.default fixture ]; }).config.launchd.agents;
           empty = (lib.evalModules { modules = [ stub ./nix/module.nix { home.homeDirectory = "/Users/t"; } ]; }).config.launchd.agents;
         in
         {
@@ -40,6 +44,7 @@
             assert got.supervisor.config.KeepAlive && got.supervisor.config.RunAtLoad;
             assert got.supervisor.config.StandardOutPath == "/Users/t/Library/Logs/supervisor.log";
             assert empty == { }; # defaults add no agent
+            assert twice == got; # imported twice: deduplicated, not "already declared"
             pkgs.runCommand "launchd-tools-module-logic" { } "touch $out";
 
           # Under real Home Manager, on every system: HM declares launchd.agents everywhere (only the plists and
