@@ -38,6 +38,7 @@ in
       logDir = lib.mkOption {
         type = lib.types.str;
         default = "${config.home.homeDirectory}/Library/Logs";
+        defaultText = lib.literalExpression ''"''${config.home.homeDirectory}/Library/Logs"'';
         description = "Directory for supervisor.log and supervisor.err.log.";
       };
     };
