@@ -30,6 +30,9 @@
             options.home = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
           };
           got = (lib.evalModules { modules = [ stub ./nix/module.nix fixture ]; }).config.launchd.agents;
+          # Option docs render without a configured home directory (defaults that read config need defaultText).
+          docs = lib.optionAttrSetToDocList (lib.evalModules { modules = [ stub ./nix/module.nix ]; }).options.launchdTools;
+          logDirDoc = lib.findFirst (o: o.name == "launchdTools.supervisor.logDir") null docs;
           empty = (lib.evalModules { modules = [ stub ./nix/module.nix { home.homeDirectory = "/Users/t"; } ]; }).config.launchd.agents;
         in
         {
@@ -40,6 +43,7 @@
             assert got.supervisor.config.KeepAlive && got.supervisor.config.RunAtLoad;
             assert got.supervisor.config.StandardOutPath == "/Users/t/Library/Logs/supervisor.log";
             assert empty == { }; # defaults add no agent
+            assert builtins.deepSeq docs (logDirDoc.default.text == ''"''${config.home.homeDirectory}/Library/Logs"'');
             pkgs.runCommand "launchd-tools-module-logic" { } "touch $out";
         }
         // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
